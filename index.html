@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國考大挑戰 - アニメクイズ</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 動漫風格背景動畫 */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .sakura {
+            position: absolute;
+            color: #ff69b4;
+            animation: fall 10s linear infinite;
+            font-size: 20px;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .title {
+            font-size: 2.5em;
+            color: #4a5568;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .timer {
+            color: #e53e3e !important;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .level-badge {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .question-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+            position: relative;
+            z-index: 1;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .question-text {
+            font-size: 1.3em;
+            color: #2d3748;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: grid;
+            gap: 10px;
+        }
+
+        .option {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option:hover {
+            background: #edf2f7;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .option.correct {
+            background: #48bb78;
+            color: white;
+            border-color: #48bb78;
+            animation: correctAnswer 0.6s ease;
+        }
+
+        .option.incorrect {
+            background: #f56565;
+            color: white;
+            border-color: #f56565;
+            animation: incorrectAnswer 0.6s ease;
+        }
+
+        @keyframes correctAnswer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes incorrectAnswer {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result {
+            text-align: center;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .answers-review {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .review-title {
+            text-align: center;
+            font-size: 1.5em;
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .answer-item {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #e2e8f0;
+        }
+
+        .answer-item.correct-answer {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .answer-item.wrong-answer {
+            border-left-color: #f56565;
+            background: #fffaf0;
+        }
+
+        .review-question {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .review-options {
+            margin-bottom: 10px;
+        }
+
+        .review-option {
+            padding: 5px 0;
+            color: #4a5568;
+        }
+
+        .review-option.user-choice {
+            color: #f56565;
+            font-weight: bold;
+        }
+
+        .review-option.correct-choice {
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        .review-option.user-correct {
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        .answer-status {
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .answer-status.correct {
+            color: #48bb78;
+        }
+
+        .answer-status.incorrect {
+            color: #f56565;
+        }
+
+        .toggle-answers-btn {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+            font-weight: bold;
+        }
+
+        .toggle-answers-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .result-title {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .result-score {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .result-message {
+            font-size: 1.2em;
+            color: #718096;
+            margin-bottom: 20px;
+        }
+
+        .final-level {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .firebase-config {
+            background: #f7fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .config-title {
+            color: #4a5568;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .config-text {
+            color: #718096;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px;
+                padding: 20px;
+            }
+            
+            .title {
+                font-size: 2em;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation" id="bgAnimation"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🌸 新手挑戰國考區 🌸</h1>
+            <p class="subtitle">アニメクイズ - Pharmacist Quiz</p>
+        </div>
+
+        <div class="firebase-config" id="firebaseConfig">
+            <div class="config-title">🔧 Firebase 配置</div>
+            <div class="config-text">
+                請在下方 `firebaseConfig` 變數中填入你的專案資訊<br>
+                並確保 Firestore 中有一個名為 **`Questions`** 的集合 (而不是 `quiz_questions`)，<br>
+                且其文件結構符合範例。
+            </div>
+        </div>
+
+        <div class="stats-bar" id="statsBar" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-label">時間</div>
+                <div class="stat-value timer" id="timer">60</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">分數</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">等級</div>
+                <div class="level-badge" id="level">初心者</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">題目</div>
+                <div class="stat-value" id="progress">1/10</div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>正在載入題目...</p>
+        </div>
+
+        <div class="error" id="error" style="display: none;"></div>
+
+        <div class="question-container" id="questionContainer" style="display: none;">
+            <div class="question-number" id="questionNumber">題目 1 / 10</div>
+            <div class="question-text" id="questionText"></div>
+            <div class="options" id="options"></div>
+        </div>
+
+        <div class="controls" id="controls" style="display: none;">
+            <button class="btn" id="startBtn" onclick="startQuiz()">開始測驗</button>
+            <button class="btn" id="nextBtn" onclick="nextQuestion()" style="display: none;">下一題</button>
+            <button class="btn" id="restartBtn" onclick="restartQuiz()" style="display: none;">重新開始</button>
+        </div>
+
+        <div class="result" id="result" style="display: none;">
+            <h2 class="result-title">測驗完成！</h2>
+            <div class="result-score" id="finalScore">0</div>
+            <div class="result-message" id="resultMessage"></div>
+            <div class="final-level" id="finalLevel"></div>
+            <div>
+                <button class="toggle-answers-btn" id="toggleAnswersBtn" onclick="toggleAnswersReview()">查看解答</button>
+                <button class="btn" onclick="restartQuiz()">再次挑戰</button>
+            </div>
+            
+            <div class="answers-review" id="answersReview" style="display: none;">
+                <div class="review-title">📝 答案解析</div>
+                <div id="answersContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
+
+    <script>
+        // ================================
+        // Firebase 配置 - 請填入你的配置資訊
+        // ================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxNN0bWC0kIzeIxFwc9tGFraup0DQef5o", // <-- 將此替換為你的 API Key
+            authDomain: "testdatabase-b1c0b.firebaseapp.com", // <-- 將此替換為你的 Project ID
+            projectId: "testdatabase-b1c0b", // <-- 將此替換為你的 Project ID
+            storageBucket: "testdatabase-b1c0b.firebasestorage.app", // <-- 將此替換為你的 Project ID
+            messagingSenderId: "695517699476", // <-- 將此替換為你的 Messaging Sender ID
+            appId: "1:695517699476:web:8e998a2a5865157dad4381" // <-- 將此替換為你的 App ID
+        };
+
+        // ================================
+        // 全域變數
+        // ================================
+        let db;
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeLeft = 60;
+        let timer = null;
+        let selectedAnswer = null;
+        let isFirebaseConfigured = false;
+        let userAnswers = []; // 儲存使用者的答案
+
+        // 等級系統
+        const levels = [
+            { name: "初心者", minScore: 0, color: "#9ca3af" },
+            { name: "見習生", minScore: 20, color: "#10b981" },
+            { name: "中級者", minScore: 40, color: "#3b82f6" },
+            { name: "上級者", minScore: 60, color: "#8b5cf6" },
+            { name: "專家", minScore: 80, color: "#f59e0b" },
+            { name: "大師", minScore: 95, color: "#ef4444" }
+        ];
+
+        // 範例題目（當 Firebase 無法使用或沒有題目時的後備）
+        const sampleQuestions = [
+            {
+                question: "以下哪部動畫是宮崎駿執導的作品？",
+                options: ["龍貓", "你的名字", "鬼滅之刃", "進擊的巨人"],
+                correct: 0,
+                explanation: "《龍貓》是宮崎駿在1988年執導的經典動畫電影，是吉卜力工作室的代表作品之一。"
+            },
+            {
+                question: "《火影忍者》中主角的名字是？",
+                options: ["漩渦鳴人", "宇智波佐助", "春野櫻", "旗木卡卡西"],
+                correct: 0,
+                explanation: "漩渦鳴人是《火影忍者》的主角，夢想成為火影，擁有九尾妖狐的力量。"
+            },
+            {
+                question: "《航海王》的作者是誰？",
+                options: ["鳥山明", "尾田榮一郎", "岸本齊史", "久保帶人"],
+                correct: 1,
+                explanation: "尾田榮一郎是《航海王》(One Piece)的作者，這部作品自1997年開始連載至今。"
+            },
+            {
+                question: "以下哪部作品不是吉卜力工作室製作的？",
+                options: ["天空之城", "魔女宅急便", "你的名字", "風之谷"],
+                correct: 2,
+                explanation: "《你的名字》是由新海誠執導的作品，由CoMix Wave Films製作，不是吉卜力工作室的作品。"
+            },
+            {
+                question: "《鬼滅之刃》中炭治郎使用的呼吸法是？",
+                options: ["水之呼吸", "火之呼吸", "風之呼吸", "日之呼吸"],
+                correct: 0,
+                explanation: "炭治郎最初學習的是水之呼吸，後來覺醒了日之呼吸，但水之呼吸是他的基礎招式。"
+            }
+        ];
+
+        // ================================
+        // 初始化
+        // ================================
+        window.onload = function() {
+            initFirebase();
+            createBackgroundAnimation();
+            checkFirebaseConfig();
+        };
+
+        function initFirebase() {
+            try {
+                // 檢查 Firebase 配置是否有效 (判斷是否為預設值)
+                if (firebaseConfig.apiKey !== "YOUR_API_KEY" && 
+                    firebaseConfig.projectId !== "YOUR_PROJECT_ID") {
+                    firebase.initializeApp(firebaseConfig);
+                    db = firebase.firestore();
+                    isFirebaseConfigured = true;
+                    console.log("Firebase 初始化成功");
+                } else {
+                    console.log("Firebase 配置未填寫，將使用範例題目模式");
+                    showError("Firebase 配置未填寫，請在程式碼中填入你的專案資訊。");
+                }
+            } catch (error) {
+                console.error("Firebase 初始化失敗:", error);
+                showError("Firebase 連接失敗，請檢查配置資訊是否正確。將使用範例題目。");
+            }
+        }
+
+        function checkFirebaseConfig() {
+            if (isFirebaseConfigured) {
+                document.getElementById('firebaseConfig').style.display = 'none'; // 隱藏提示
+                document.getElementById('controls').style.display = 'flex';
+                document.getElementById('loading').style.display = 'none';
+            } else {
+                document.getElementById('controls').style.display = 'flex';
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // ================================
+        // 背景動畫
+        // ================================
+        function createBackgroundAnimation() {
+            const bgAnimation = document.getElementById('bgAnimation');
+            const sakuraSymbols = ['🌸', '🌺', '🎋', '🌿', '🍃'];
+            
+            setInterval(() => {
+                if (document.querySelectorAll('.sakura').length < 10) {
+                    const sakura = document.createElement('div');
+                    sakura.className = 'sakura';
+                    sakura.textContent = sakuraSymbols[Math.floor(Math.random() * sakuraSymbols.length)];
+                    sakura.style.left = Math.random() * 100 + '%';
+                    sakura.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                    sakura.style.animationDelay = Math.random() * 2 + 's';
+                    bgAnimation.appendChild(sakura);
+                    
+                    setTimeout(() => {
+                        if (sakura.parentNode) {
+                            sakura.parentNode.removeChild(sakura);
+                        }
+                    }, 12000);
+                }
+            }, 1000);
+        }
+
+        // ================================
+        // 測驗邏輯
+        // ================================
+        async function startQuiz() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('controls').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+                
+                // 載入題目
+                await loadQuestions();
+                
+                if (questions.length === 0) {
+                    throw new Error("沒有找到題目，請檢查 Firebase 或使用範例題目。");
+                }
+                
+                // 初始化測驗狀態
+                currentQuestionIndex = 0;
+                score = 0;
+                timeLeft = 60;
+                selectedAnswer = null;
+                userAnswers = []; // 重置使用者答案
+                
+                // 顯示測驗界面
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('statsBar').style.display = 'flex';
+                document.getElementById('questionContainer').style.display = 'block';
+                document.getElementById('controls').style.display = 'flex';
+                document.getElementById('nextBtn').style.display = 'inline-block';
+                document.getElementById('startBtn').style.display = 'none';
+                
+                // 開始計時
+                startTimer();
+                
+                // 顯示第一題
+                showQuestion();
+                
+            } catch (error) {
+                console.error("開始測驗失敗:", error);
+                showError("載入題目失敗: " + error.message);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('controls').style.display = 'flex';
+                document.getElementById('startBtn').style.display = 'inline-block'; // 確保開始按鈕可見
+            }
+        }
+
+        async function loadQuestions() {
+            if (isFirebaseConfigured) {
+                try {
+                    // 從 'Questions' 集合中讀取文件
+                    const snapshot = await db.collection('Questions').get(); // <-- 集合名稱從 'quiz_questions' 改為 'Questions'
+                    questions = [];
+                    const optionKeys = ['A', 'B', 'C', 'D']; // 定義選項的鍵
+                    
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        
+                        // 確保數據結構符合預期，並且進行格式轉換
+                        if (data.text && data.options && data.answer) {
+                            const newOptions = [];
+                            let correctAnswerIndex = -1;
+                            
+                            // 將 options 物件轉換為陣列
+                            optionKeys.forEach((key, index) => {
+                                if (data.options[key]) {
+                                    newOptions.push(data.options[key]);
+                                    if (key === data.answer) {
+                                        correctAnswerIndex = index;
+                                    }
+                                }
+                            });
+
+                            // 檢查是否所有選項都存在，並且正確答案索引有效
+                            if (newOptions.length > 0 && correctAnswerIndex !== -1) {
+                                questions.push({
+                                    question: data.text,
+                                    options: newOptions,
+                                    correct: correctAnswerIndex,
+                                    explanation: data.explanation || "暫無解析"
+                                });
+                            } else {
+                                console.warn(`文檔 ${doc.id} 格式不正確或選項缺失，已跳過。`, data);
+                            }
+                        } else {
+                            console.warn(`文檔 ${doc.id} 缺少必要字段 (text, options, answer)，已跳過。`, data);
+                        }
+                    });
+                    
+                    if (questions.length === 0) {
+                        console.log("Firestore 中沒有符合格式的題目，使用範例題目");
+                        questions = [...sampleQuestions];
+                    }
+                } catch (error) {
+                    console.error("從 Firestore 載入題目失敗:", error);
+                    showError("從 Firestore 載入題目失敗，將使用範例題目。錯誤：" + error.message);
+                    questions = [...sampleQuestions];
+                }
+            } else {
+                questions = [...sampleQuestions];
+            }
+            
+            // 隨機打亂題目順序
+            questions = shuffleArray(questions);
+        }
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function showQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                endQuiz();
+                return;
+            }
+            
+            const question = questions[currentQuestionIndex];
+            
+            // 更新界面
+            document.getElementById('questionNumber').textContent = 
+                `題目 ${currentQuestionIndex + 1} / ${questions.length}`;
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('progress').textContent = 
+                `${currentQuestionIndex + 1}/${questions.length}`;
+            
+            // 生成選項
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            selectedAnswer = null;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function selectAnswer(answerIndex) {
+            // 清除之前的選擇
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // 標記新選擇
+            document.querySelectorAll('.option')[answerIndex].classList.add('selected');
+            selectedAnswer = answerIndex;
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function nextQuestion() {
+            if (selectedAnswer === null) return;
+            
+            const question = questions[currentQuestionIndex];
+            const isCorrect = selectedAnswer === question.correct;
+            
+            // 儲存使用者的答案
+            userAnswers.push({
+                questionIndex: currentQuestionIndex,
+                question: question.question,
+                options: question.options,
+                userAnswer: selectedAnswer,
+                correctAnswer: question.correct,
+                isCorrect: isCorrect,
+                explanation: question.explanation || "暫無解析"
+            });
+            
+            // 顯示答案
+            document.querySelectorAll('.option').forEach((option, index) => {
+                if (index === question.correct) {
+                    option.classList.add('correct');
+                } else if (index === selectedAnswer && !isCorrect) {
+                    option.classList.add('incorrect');
+                }
+                option.onclick = null; // 禁用點擊
+            });
+            
+            // 更新分數
+            if (isCorrect) {
+                score += 20;
+                updateScore();
+            }
+            
+            // 延遲顯示下一題
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showQuestion();
+            }, 1500);
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            
+            // 更新等級
+            const currentLevel = getCurrentLevel();
+            const levelBadge = document.getElementById('level');
+            levelBadge.textContent = currentLevel.name;
+            levelBadge.style.background = `linear-gradient(45deg, ${currentLevel.color}, #4ecdc4)`;
+        }
+
+        function getCurrentLevel() {
+            for (let i = levels.length - 1; i >= 0; i--) {
+                if (score >= levels[i].minScore) {
+                    return levels[i];
+                }
+            }
+            return levels[0];
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    endQuiz();
+                }
+            }, 1000);
+        }
+
+        function endQuiz() {
+            clearInterval(timer);
+            
+            // 如果時間到了但還有未回答的題目，將剩餘題目標記為未回答
+            while (currentQuestionIndex < questions.length) {
+                const question = questions[currentQuestionIndex];
+                userAnswers.push({
+                    questionIndex: currentQuestionIndex,
+                    question: question.question,
+                    options: question.options,
+                    userAnswer: -1, // -1 表示未回答
+                    correctAnswer: question.correct,
+                    isCorrect: false,
+                    explanation: question.explanation || "暫無解析"
+                });
+                currentQuestionIndex++;
+            }
+            
+            // 隱藏測驗界面
+            document.getElementById('statsBar').style.display = 'none';
+            document.getElementById('questionContainer').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            
+            // 顯示結果
+            const finalLevel = getCurrentLevel();
+            document.getElementById('finalScore').textContent = score + '分';
+            document.getElementById('finalLevel').textContent = finalLevel.name;
+            document.getElementById('finalLevel').style.background = 
+                `linear-gradient(45deg, ${finalLevel.color}, #4ecdc4)`;
+            
+            // 結果訊息
+            let message = "";
+            if (score >= 80) {
+                message = "太厲害了！國考達人！🎉";
+            } else if (score >= 60) {
+                message = "很不錯！初學者已經很厲害！👏";
+            } else if (score >= 40) {
+                message = "還可以！繼續努力學習吧！📚";
+            } else {
+                message = "加油！多看幾遍！💪";
+            }
+            
+            document.getElementById('resultMessage').textContent = message;
+            document.getElementById('result').style.display = 'block';
+            
+            // 生成答案回顧內容
+            generateAnswersReview();
+        }
+
+        function restartQuiz() {
+            // 重置狀態
+            currentQuestionIndex = 0;
+            score = 0;
+            timeLeft = 60;
+            selectedAnswer = null;
+            userAnswers = [];
+            
+            // 隱藏結果頁面和答案回顧
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('answersReview').style.display = 'none';
+            document.getElementById('toggleAnswersBtn').textContent = '查看解答';
+            
+            // 顯示開始按鈕
+            document.getElementById('controls').style.display = 'flex';
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('restartBtn').style.display = 'none';
+        }
+
+        function generateAnswersReview() {
+            const answersContent = document.getElementById('answersContent');
+            answersContent.innerHTML = '';
+            
+            userAnswers.forEach((answer, index) => {
+                const answerDiv = document.createElement('div');
+                answerDiv.className = `answer-item ${answer.isCorrect ? 'correct-answer' : 'wrong-answer'}`;
+                
+                let optionsHtml = '';
+                answer.options.forEach((option, optionIndex) => {
+                    let optionClass = 'review-option';
+                    let prefix = '';
+                    
+                    if (optionIndex === answer.correctAnswer) {
+                        optionClass += ' correct-choice';
+                        prefix = '✅ ';
+                    }
+                    
+                    if (optionIndex === answer.userAnswer) {
+                        if (answer.isCorrect) {
+                            optionClass += ' user-correct';
+                            prefix = '✅ ';
+                        } else if (answer.userAnswer !== -1) {
+                            optionClass += ' user-choice';
+                            prefix = '❌ ';
+                        }
+                    }
+                    
+                    if (answer.userAnswer === -1 && optionIndex === answer.correctAnswer) {
+                        prefix = '✅ ';
+                    }
+                    
+                    optionsHtml += `<div class="${optionClass}">${prefix}${option}</div>`;
+                });
+                
+                let statusText = '';
+                let statusClass = '';
+                if (answer.userAnswer === -1) {
+                    statusText = '⏰ 未回答';
+                    statusClass = 'incorrect';
+                } else if (answer.isCorrect) {
+                    statusText = '🎉 回答正確！';
+                    statusClass = 'correct';
+                } else {
+                    statusText = '💪 答錯了，繼續加油！';
+                    statusClass = 'incorrect';
+                }
+                
+                answerDiv.innerHTML = `
+                    <div class="review-question">第${index + 1}題：${answer.question}</div>
+                    <div class="review-options">${optionsHtml}</div>
+                    <div class="answer-status ${statusClass}">${statusText}</div>
+                    ${answer.explanation ? `<div style="margin-top: 10px; color: #4a5568; font-style: italic;">💡 ${answer.explanation}</div>` : ''}
+                `;
+                
+                answersContent.appendChild(answerDiv);
+            });
+        }
+
+        function toggleAnswersReview() {
+            const answersReview = document.getElementById('answersReview');
+            const toggleBtn = document.getElementById('toggleAnswersBtn');
+            
+            if (answersReview.style.display === 'none') {
+                answersReview.style.display = 'block';
+                toggleBtn.textContent = '隱藏解答';
+            } else {
+                answersReview.style.display = 'none';
+                toggleBtn.textContent = '查看解答';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // ================================
+        // Firestore 數據結構參考
+        // ================================
+        /*
+        在 Firestore 中創建 'Questions' 集合，每個文檔 (例如 doc id 'question001') 包含：
+        {
+            "question004": {
+            "type": "multiple_choice",
+            "text": "M2-muscarinic receptor在心臟活化時，會透過哪種G蛋白途徑導致心率減慢？",
+            "options": {
+                "A": "Gs蛋白",
+                "B": "Gq蛋白",
+                "C": "Gi蛋白",
+                "D": "Go蛋白"
+            },
+            "answer": "C",
+            "explanation":
+        }
+        
+        例如：
+        在 Firestore 的 'Questions' 集合下，有一個文件 (例如 ID 為 'question001')：
+        {
+          "type": "multiple_choice",
+          "text": "以下哪種動物是哺乳類？",
+          "options": {
+            "A": "麻雀",
+            "B": "鱷魚",
+            "C": "鯨魚",
+            "D": "青蛙"
+          },
+          "answer": "C",
+          "explanation": "鯨魚雖然生活在水中，但牠們是用肺呼吸的哺乳動物。"
+        }
+        */
+    </script>
+</body>
+</html>
