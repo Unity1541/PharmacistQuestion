@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -111,10 +113,14 @@
             border-radius: 10px;
             position: relative;
             z-index: 1;
+            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
         }
 
         .stat-item {
             text-align: center;
+            flex: 1 1 20%; /* Distribute space, allow shrinking/growing */
+            min-width: 80px; /* Minimum width for each item */
+            margin: 5px 0; /* Add some vertical margin */
         }
 
         .stat-label {
@@ -473,8 +479,12 @@
             }
             
             .stats-bar {
-                flex-direction: column;
-                gap: 10px;
+                flex-direction: row; /* Keep as row for better spacing on small screens */
+                justify-content: space-around;
+                gap: 5px; /* Reduce gap */
+            }
+            .stat-item {
+                flex: 1 1 45%; /* Two items per row */
             }
             
             .controls {
@@ -509,6 +519,10 @@
             <div class="stat-item">
                 <div class="stat-label">分數</div>
                 <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">最高分</div>
+                <div class="stat-value" id="highestScoreDisplay">0</div>
             </div>
             <div class="stat-item">
                 <div class="stat-label">等級</div>
@@ -579,11 +593,12 @@
         let questions = [];
         let currentQuestionIndex = 0;
         let score = 0;
-        let timeLeft = 60;
+        let timeLeft = 60; // Time per question
         let timer = null;
         let selectedAnswer = null;
         let isFirebaseConfigured = false;
         let userAnswers = []; // 儲存使用者的答案
+        let highestScore = 0; // 新增最高分變數
 
         // 等級系統
         const levels = [
@@ -636,6 +651,7 @@
             initFirebase();
             createBackgroundAnimation();
             checkFirebaseConfig();
+            loadHighestScore(); // 載入最高分
         };
 
         function initFirebase() {
@@ -713,7 +729,7 @@
                 // 初始化測驗狀態
                 currentQuestionIndex = 0;
                 score = 0;
-                timeLeft = 60;
+                // timeLeft = 60; // No longer needed here as it's reset per question
                 selectedAnswer = null;
                 userAnswers = []; // 重置使用者答案
                 
@@ -725,10 +741,7 @@
                 document.getElementById('nextBtn').style.display = 'inline-block';
                 document.getElementById('startBtn').style.display = 'none';
                 
-                // 開始計時
-                startTimer();
-                
-                // 顯示第一題
+                // 顯示第一題 (並啟動該題的計時器)
                 showQuestion();
                 
             } catch (error) {
@@ -809,6 +822,10 @@
         }
 
         function showQuestion() {
+            clearInterval(timer); // 停止當前計時器
+            timeLeft = 60; // 每題重新設定為 60 秒
+            startTimer(); // 開始新的計時器
+
             if (currentQuestionIndex >= questions.length) {
                 endQuiz();
                 return;
@@ -852,17 +869,25 @@
         }
 
         function nextQuestion() {
-            if (selectedAnswer === null) return;
-            
+            clearInterval(timer); // 提交答案後停止計時器
+            if (selectedAnswer === null) {
+                // 如果沒有選擇答案但點擊了下一題，視為未回答
+                processAnswer(-1); 
+            } else {
+                processAnswer(selectedAnswer);
+            }
+        }
+
+        function processAnswer(answerIdx) {
             const question = questions[currentQuestionIndex];
-            const isCorrect = selectedAnswer === question.correct;
+            const isCorrect = answerIdx === question.correct;
             
             // 儲存使用者的答案
             userAnswers.push({
                 questionIndex: currentQuestionIndex,
                 question: question.question,
                 options: question.options,
-                userAnswer: selectedAnswer,
+                userAnswer: answerIdx,
                 correctAnswer: question.correct,
                 isCorrect: isCorrect,
                 explanation: question.explanation || "暫無解析"
@@ -872,7 +897,7 @@
             document.querySelectorAll('.option').forEach((option, index) => {
                 if (index === question.correct) {
                     option.classList.add('correct');
-                } else if (index === selectedAnswer && !isCorrect) {
+                } else if (index === answerIdx && !isCorrect) {
                     option.classList.add('incorrect');
                 }
                 option.onclick = null; // 禁用點擊
@@ -890,6 +915,7 @@
                 showQuestion();
             }, 1500);
         }
+
 
         function updateScore() {
             document.getElementById('score').textContent = score;
@@ -911,13 +937,15 @@
         }
 
         function startTimer() {
+            document.getElementById('timer').textContent = timeLeft; // Display initial time
             timer = setInterval(() => {
                 timeLeft--;
                 document.getElementById('timer').textContent = timeLeft;
                 
                 if (timeLeft <= 0) {
                     clearInterval(timer);
-                    endQuiz();
+                    // 如果時間到了，自動提交當前題目為未回答
+                    processAnswer(-1); // -1 表示未回答
                 }
             }, 1000);
         }
@@ -926,6 +954,8 @@
             clearInterval(timer);
             
             // 如果時間到了但還有未回答的題目，將剩餘題目標記為未回答
+            // Note: processAnswer now handles this for the current question when time runs out.
+            // This loop ensures any *remaining* questions (if the quiz ended early for some reason, e.g., manual end) are accounted for.
             while (currentQuestionIndex < questions.length) {
                 const question = questions[currentQuestionIndex];
                 userAnswers.push({
@@ -940,6 +970,13 @@
                 currentQuestionIndex++;
             }
             
+            // 更新最高分
+            if (score > highestScore) {
+                highestScore = score;
+                localStorage.setItem('highestScore', highestScore); // 儲存最高分
+                document.getElementById('highestScoreDisplay').textContent = highestScore;
+            }
+
             // 隱藏測驗界面
             document.getElementById('statsBar').style.display = 'none';
             document.getElementById('questionContainer').style.display = 'none';
@@ -971,11 +1008,20 @@
             generateAnswersReview();
         }
 
+        function loadHighestScore() {
+            const storedScore = localStorage.getItem('highestScore');
+            if (storedScore) {
+                highestScore = parseInt(storedScore, 10);
+            }
+            document.getElementById('highestScoreDisplay').textContent = highestScore;
+        }
+
         function restartQuiz() {
             // 重置狀態
             currentQuestionIndex = 0;
             score = 0;
-            timeLeft = 60;
+            clearInterval(timer); // 確保清除計時器
+            timeLeft = 60; // 重置時間
             selectedAnswer = null;
             userAnswers = [];
             
@@ -989,6 +1035,11 @@
             document.getElementById('startBtn').style.display = 'inline-block';
             document.getElementById('nextBtn').style.display = 'none';
             document.getElementById('restartBtn').style.display = 'none';
+
+            // 更新分數顯示和最高分顯示
+            document.getElementById('score').textContent = score;
+            document.getElementById('highestScoreDisplay').textContent = highestScore; // Make sure highest score is shown
+            document.getElementById('timer').textContent = timeLeft; // Display initial time
         }
 
         function generateAnswersReview() {
@@ -1020,6 +1071,7 @@
                     }
                     
                     if (answer.userAnswer === -1 && optionIndex === answer.correctAnswer) {
+                        // If unanswered, mark the correct choice with a checkmark
                         prefix = '✅ ';
                     }
                     
@@ -1029,7 +1081,7 @@
                 let statusText = '';
                 let statusClass = '';
                 if (answer.userAnswer === -1) {
-                    statusText = '⏰ 未回答';
+                    statusText = '⏰ 未回答 (時間到)';
                     statusClass = 'incorrect';
                 } else if (answer.isCorrect) {
                     statusText = '🎉 回答正確！';
@@ -1085,7 +1137,7 @@
                 "D": "Go蛋白"
             },
             "answer": "C",
-            "explanation":
+            "explanation": "M2受體屬於GABA_B受體家族，主要透過Gi蛋白偶聯，活化時可抑制cAMP的合成並活化鉀離子通道，從而減慢心率。"
         }
         
         例如：
